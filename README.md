@@ -1,7 +1,7 @@
 # DMALibrary
 Simple but extensive library for DMA users
 
-Supports
+# Supports
 - Sig Scanning
 - Read Memory
 - Write Memory
