@@ -1,16 +1,29 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+#include <vector>
 #include "Vector.h"
 #include "../../DMALibrary/Memory/Memory.h"
+#include <string>
+#include <algorithm>
 
-const uint64_t SYSTEM_GLOBAL_ENVIRONMENT = 0x5EFCF90; // Update this as needed
-const uint64_t ENTITY_SYSTEM_OFFSET = 0xA8;
-const uint64_t PSYSTEM_OFFSET = 0xC0;
-const uint64_t OBJECT_COUNT_OFFSET = 0x4006A;
-const uint64_t ENTITY_LIST_OFFSET = 0x40078;
-const uint64_t POS_OFFSET = 0x128;
-const uint64_t RENDER_NODE_COLOR_OFFSET = 0x3C; // Ensure this is the correct offset for color in the render node
+// All variables from this Project
+uint64_t SSystemGlobEnv = 0x26782f8; // Update this as needed
+uint64_t EntitySystemOffset = 0xC0;
+uint64_t Psystem = 0x90;
+uint64_t ObjectCountOffset = 0x40092;
+uint64_t EntityListOffset = 0x40078;
+uint64_t PosOffset = 0x134;
+uint64_t RenderNodeColorOffset = 0x3C;
+uint64_t RenderNodePointer = 0x0;
+
+uint64_t renderNodePtr;
+
+bool run = true;
+Vector3 ImmolatorBossPos;
+// Apply additional commands before writing the glow color
+uint64_t allmap = 0x80018;
+float maxdistance = 5000;
 
 enum colorType : uint32_t {
     Red = 0xFF0000FF,
@@ -20,23 +33,39 @@ enum colorType : uint32_t {
     Orange = 0xFFA500FF,
     Yellow = 0xFFFF00FF,
     White = 0xFFFFFFFF,
-    RedFilled = 0xFF000000
+    RedFilled = 0xFF000000,
+    BlueFilled = 0x0000FF00,
+    YellowFilled = 0xFFFF0000,
+    OrangeFilled = 0xFFA50000,
+    CyanFilled = 0x00FFFF00,
+    WhiteFilled = 0xFFFFFF00
 };
 
 struct renderNode {
     char pad_01[0x28]; // 0x00(0x28)
-    uint64_t rnd_flags; // 0x28(0x08)
-    char pad_02[0xC]; // 0x30(0xC)
-    uint32_t silhouettes_param; // 0x3C(0x04)
+    unsigned __int64 rnd_flags; // 0x28(0x08)
+    char pad_02[0xc]; // 0x30(0xc)
+    unsigned int silhouettes_param; // 0x3c(0x04)
 };
 
-struct EntityNameStruct {
+struct entityNameStruct {
     char name[100];
 };
 
-bool run = true;
+
+
+
+const char* hunter = "HunterBasic";
+
 
 int main() {
+
+    std::vector<uint64_t> entityBases;
+
+    uint64_t HunterBasic;
+    uint64_t immolator_el;
+    uint64_t Target_Butcher;
+
     // Initialize memory
     if (!mem.Init("HuntGame.exe", true, true)) {
         std::cout << "Failed to initialize DMA" << std::endl;
@@ -52,88 +81,99 @@ int main() {
 
     uintptr_t base = mem.GetBaseDaddy("GameHunt.dll");
 
-    while (run) {
-        uint64_t systemGlobalEnvironment = mem.Read<uint64_t>(base + SYSTEM_GLOBAL_ENVIRONMENT);
-        if (systemGlobalEnvironment == 0) {
+    uint64_t SSystemGlobalEnvironment = mem.Read<uint64_t>(base + SSystemGlobEnv);
+    uint64_t EntitySystem = mem.Read<uint64_t>(SSystemGlobalEnvironment + EntitySystemOffset);
+    uint64_t pSystem = mem.Read<uint64_t>(SSystemGlobalEnvironment + Psystem);
+
+    // This is only 4 bytes and no negatives
+    uint16_t NumberOfObjects = mem.Read<uint16_t>(EntitySystem + ObjectCountOffset);
+    std::cout << "NumberOfObjects: " << NumberOfObjects << std::endl;
+
+    uint64_t EntityList = EntitySystem + EntityListOffset;
+
+    D3DXMATRIX m_renderViewMatrix = mem.Read<D3DXMATRIX>(pSystem + 0x928 + 0x230);
+    Vector3 cameraPos = mem.Read<Vector3>(pSystem + 0x928 + 0x2F0);
+    D3DXMATRIX m_renderProjectionMatrix = mem.Read<D3DXMATRIX>(pSystem + 0x928 + 0x270);
+         
+    // Counter for the number of HunterBasic entities found
+    int hunterCount = 0;
+    int Target_ButcherCount = 0;
+    int immolator_eliteCount = 0;
+
+
+    bool loopCompleted = false;
+
+
+    std::vector<uint64_t> hunterBases;
+    std::vector<uint64_t> immolatorBases;
+    std::vector<uint64_t> butcherBases;
+
+    // Iterate through the numberOfObjects
+    for (unsigned int i = 0; i < NumberOfObjects; ++i) {
+        uint64_t entityBase = mem.Read<uintptr_t>(EntityList + i * sizeof(uint64_t));
+        if (entityBase == NULL) {
             continue;
         }
 
-        uint64_t entitySystem = mem.Read<uint64_t>(systemGlobalEnvironment + ENTITY_SYSTEM_OFFSET);
-        if (entitySystem == 0) {
-            continue;
+        // Get name of entity
+        uintptr_t entityNamePtr = mem.Read<uintptr_t>(entityBase + 0x10);
+        entityNameStruct entityName = mem.Read<entityNameStruct>(entityNamePtr);
+        entityName.name[99] = '\0';
+
+        // Store entities in separate vectors based on their type
+        if (strstr(entityName.name, "HunterBasic") != NULL) {
+            hunterBases.push_back(entityBase);
+            std::cout << "Found HunterBasic  [" << hunterBases.size() << "]" << std::endl;
         }
-
-        uint64_t pSystem = mem.Read<uint64_t>(systemGlobalEnvironment + PSYSTEM_OFFSET);
-        if (pSystem == 0) {
-            continue;
+        else if (strstr(entityName.name, "immolator_el") != NULL) {
+            immolatorBases.push_back(entityBase);
+            std::cout << "Found immolator_elite  [" << immolatorBases.size() << "]" << std::endl;
         }
-
-        uint64_t numberOfObjects = mem.Read<uint64_t>(entitySystem + OBJECT_COUNT_OFFSET);
-        uint64_t entityList = entitySystem + ENTITY_LIST_OFFSET;
-
-        for (unsigned int i = 0; i < numberOfObjects; ++i) {
-            uint64_t entity = mem.Read<uint64_t>(entityList + i * sizeof(uint64_t));
-            if (entity == 0) {
-                continue;
-            }
-
-            Vector3 enemyPos = mem.Read<Vector3>(entity + POS_OFFSET);
-
-            // Get name of entity
-            uintptr_t entityNamePtr = mem.Read<uintptr_t>(entity + 0x10);
-            EntityNameStruct entityName = mem.Read<EntityNameStruct>(entityNamePtr);
-            entityName.name[99] = '\0';
-
-            // Get class name of entity
-            uintptr_t entityClassPtr = mem.Read<uintptr_t>(entity + 0x18);
-            entityClassPtr = mem.Read<uintptr_t>(entityClassPtr + 0x10);
-            EntityNameStruct entityClassName = mem.Read<EntityNameStruct>(entityClassPtr);
-            entityClassName.name[99] = '\0';
-
-            std::cout << "Entity Name: " << entityName.name << ", Class Name: " << entityClassName.name << std::endl;
-
-            // Get entity render node
-            uintptr_t slotsPtr = mem.Read<uintptr_t>(entity + 0xA8);
-            if (slotsPtr == 0) {
-                continue;
-            }
-
-            uintptr_t slotPtr = mem.Read<uintptr_t>(slotsPtr + 0);
-            if (slotPtr == 0) {
-                continue;
-            }
-
-            uintptr_t renderNodePtr = mem.Read<uintptr_t>(slotPtr + 0xA8);
-            if (renderNodePtr == 0) {
-                continue;
-            }
-
-                renderNode rNode = mem.Read<renderNode>(renderNodePtr);
-            // Filter specific entities by name or class name
-            if (strstr(entityName.name, "HunterBasic") != nullptr) {
-
-
-
-
-                // Write the color to the render node
-                uint32_t RGBAColor = colorType::RedFilled;
-                mem.Write<uint32_t>(renderNodePtr + RENDER_NODE_COLOR_OFFSET, RGBAColor);
-                
-            }
+        else if (strstr(entityName.name, "Target_Butcher") != NULL) {
+            butcherBases.push_back(entityBase);
+            std::cout << "Found Target_Butcher  [" << butcherBases.size() << "]" << std::endl;
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep for 100 milliseconds
     }
+
+    // Accessing Immolator positions
+    if (!immolatorBases.empty()) {
+        for (size_t i = 0; i < immolatorBases.size(); ++i) {
+            Vector3 immolatorPos = mem.Read<Vector3>(immolatorBases[i] + PosOffset);
+            std::cout << "Immolator " << i + 1 << " Position - X: " << immolatorPos.x << " Y: " << immolatorPos.y << " Z: " << immolatorPos.z << std::endl;
+        }
+    }
+
+
+
+
+    loopCompleted = true;
+
+    while (loopCompleted)
+    {
+
+
+        // Accessing HunterBasic positions
+        if (!hunterBases.empty()) {
+            for (size_t i = 0; i < hunterBases.size(); ++i) {
+                Vector3 hunterPos = mem.Read<Vector3>(hunterBases[i] + PosOffset);
+                std::cout << "Hunter " << i + 1 << " Position - X: " << hunterPos.x << " Y: " << hunterPos.y << " Z: " << hunterPos.z << std::endl;
+            }
+        }
+        // Accessing Immolator positions
+        if (!immolatorBases.empty()) {
+            for (size_t i = 0; i < immolatorBases.size(); ++i) {
+                Vector3 immolatorPos = mem.Read<Vector3>(immolatorBases[i] + PosOffset);
+                std::cout << "Immolator " << i + 1 << " Position - X: " << immolatorPos.x << " Y: " << immolatorPos.y << " Z: " << immolatorPos.z << std::endl;
+            }
+        }
+
+    }
+
+
+
+    // Wait for user input before exiting
+    std::cout << "Press Enter to exit...";
+    std::cin.get();
 
     return 0;
 }
-
-
-/*
-        uint64_t allmap = 0x80018;
-        float maxdistance = 5000;
-        TargetProcess.AddScatterWriteRequest(handle, RenderNodePointer + 0x28, &allmap, sizeof(uint64_t)); // change render flag to max distance, allows us to use chams at further distances as long as the model isn't culled.
-        TargetProcess.AddScatterWriteRequest(handle, RenderNodePointer + 0x3c, &convertedcolour, sizeof(uint32_t));
-        TargetProcess.AddScatterWriteRequest(handle, RenderNodePointer + 0x48, &maxdistance, sizeof(float));// credit Kiosk
-        // printf RenderNodePointer
-        */

@@ -22,6 +22,7 @@
     <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Main.h" />
     <ClInclude Include="src\Vector.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
