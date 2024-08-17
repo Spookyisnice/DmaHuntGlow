@@ -16,6 +16,7 @@ uint64_t EntityListOffset = 0x40078;
 uint64_t PosOffset = 0x134;
 uint64_t RenderNodeColorOffset = 0x3C;
 uint64_t RenderNodePointer = 0x0;
+const uint64_t RENDER_NODE_COLOR_OFFSET = 0x3C; // Ensure this is the correct offset for color in the render node
 
 uint64_t renderNodePtr;
 
@@ -42,9 +43,9 @@ enum colorType : uint32_t {
 };
 
 struct renderNode {
-    char pad_01[0x28]; // 0x00(0x28)
+    char pad_01[0x0010]; // 0x00(0x28)
     unsigned __int64 rnd_flags; // 0x28(0x08)
-    char pad_02[0xc]; // 0x30(0xc)
+    char pad_02[0x002C]; // 0x30(0xc)
     unsigned int silhouettes_param; // 0x3c(0x04)
 };
 
@@ -53,18 +54,9 @@ struct entityNameStruct {
 };
 
 
-
-
-const char* hunter = "HunterBasic";
-
-
 int main() {
 
-    std::vector<uint64_t> entityBases;
 
-    uint64_t HunterBasic;
-    uint64_t immolator_el;
-    uint64_t Target_Butcher;
 
     // Initialize memory
     if (!mem.Init("HuntGame.exe", true, true)) {
@@ -99,6 +91,7 @@ int main() {
     int hunterCount = 0;
     int Target_ButcherCount = 0;
     int immolator_eliteCount = 0;
+    uint32_t RGBAColor = colorType::Red;
 
 
     bool loopCompleted = false;
@@ -106,7 +99,10 @@ int main() {
 
     std::vector<uint64_t> hunterBases;
     std::vector<uint64_t> immolatorBases;
-    std::vector<uint64_t> butcherBases;
+    std::vector<uint64_t> Target_ButcherBases;
+    std::vector<uint64_t> Target_AssassinBase;
+    std::vector<uint64_t> Spider_targetBase;
+    std::vector<uint64_t> Target_ScrapbeakBase;
 
     // Iterate through the numberOfObjects
     for (unsigned int i = 0; i < NumberOfObjects; ++i) {
@@ -115,37 +111,91 @@ int main() {
             continue;
         }
 
+
         // Get name of entity
         uintptr_t entityNamePtr = mem.Read<uintptr_t>(entityBase + 0x10);
         entityNameStruct entityName = mem.Read<entityNameStruct>(entityNamePtr);
         entityName.name[99] = '\0';
 
+        
+        // Get entity render node
+        uintptr_t slotsPtr = mem.Read<uintptr_t>(entityBase + 0xA8);
+        if (slotsPtr == 0) {
+            continue;
+        }
+        uintptr_t slotPtr = mem.Read<uintptr_t>(slotsPtr + 0);
+        if (slotPtr == 0) {
+            continue;
+        }
+        uintptr_t renderNodePtr = mem.Read<uintptr_t>(slotPtr + 0xA0);
+        if (renderNodePtr == 0) {
+            continue;
+        }
+        renderNode rNode = mem.Read<renderNode>(renderNodePtr);
+
+
+       
+
+
+
+
         // Store entities in separate vectors based on their type
         if (strstr(entityName.name, "HunterBasic") != NULL) {
             hunterBases.push_back(entityBase);
             std::cout << "Found HunterBasic  [" << hunterBases.size() << "]" << std::endl;
+            mem.Write<uint32_t>(renderNodePtr + 0x10, 0x80018);
+            mem.Write<uint32_t>(renderNodePtr + 0x2C, CyanFilled);
+
         }
         else if (strstr(entityName.name, "immolator_el") != NULL) {
             immolatorBases.push_back(entityBase);
             std::cout << "Found immolator_elite  [" << immolatorBases.size() << "]" << std::endl;
+            mem.Write<uint32_t>(renderNodePtr + 0x10, 0x80018);
+            mem.Write<uint32_t>(renderNodePtr + 0x2C, RedFilled);
+
         }
         else if (strstr(entityName.name, "Target_Butcher") != NULL) {
-            butcherBases.push_back(entityBase);
-            std::cout << "Found Target_Butcher  [" << butcherBases.size() << "]" << std::endl;
-        }
-    }
+            Target_ButcherBases.push_back(entityBase);
+            std::cout << "Found Target_Butcher  [" << Target_ButcherBases.size() << "]" << std::endl;
+            mem.Write<uint32_t>(renderNodePtr + 0x10, 0x80018);
+            mem.Write<uint32_t>(renderNodePtr + 0x2C, RedFilled);
 
+        }
+        else if (strstr(entityName.name, "Target_Assassin") != NULL) {
+            Target_AssassinBase.push_back(entityBase);
+            std::cout << "Found Target_Assassin  [" << Target_AssassinBase.size() << "]" << std::endl;
+            mem.Write<uint32_t>(renderNodePtr + 0x10, 0x80018);
+            mem.Write<uint32_t>(renderNodePtr + 0x2C, RedFilled);
+
+        }
+        else if (strstr(entityName.name, "Spider_target") != NULL) {
+            Spider_targetBase.push_back(entityBase);
+            std::cout << "Found Spider_target  [" << Spider_targetBase.size() << "]" << std::endl;
+            mem.Write<uint32_t>(renderNodePtr + 0x10, 0x80018);
+            mem.Write<uint32_t>(renderNodePtr + 0x2C, RedFilled);
+
+        }
+        else if (strstr(entityName.name, "Target_Scrapbeak") != NULL) {
+            Target_ScrapbeakBase.push_back(entityBase);
+            std::cout << "Found Target_Scrapbeak  [" << Target_ScrapbeakBase.size() << "]" << std::endl;
+            mem.Write<uint32_t>(renderNodePtr + 0x10, 0x80018);
+            mem.Write<uint32_t>(renderNodePtr + 0x2C, RedFilled);
+
+        }
+
+    }
+    /*
     // Accessing Immolator positions
     if (!immolatorBases.empty()) {
         for (size_t i = 0; i < immolatorBases.size(); ++i) {
             Vector3 immolatorPos = mem.Read<Vector3>(immolatorBases[i] + PosOffset);
             std::cout << "Immolator " << i + 1 << " Position - X: " << immolatorPos.x << " Y: " << immolatorPos.y << " Z: " << immolatorPos.z << std::endl;
         }
-    }
+    }*/
 
 
 
-
+    /*
     loopCompleted = true;
 
     while (loopCompleted)
@@ -166,10 +216,15 @@ int main() {
                 std::cout << "Immolator " << i + 1 << " Position - X: " << immolatorPos.x << " Y: " << immolatorPos.y << " Z: " << immolatorPos.z << std::endl;
             }
         }
+        // Accessing Immolator positions
+        if (!Target_AssassinBase.empty()) {
+            for (size_t i = 0; i < Target_AssassinBase.size(); ++i) {
+                Vector3 Target_AssassinPos = mem.Read<Vector3>(Target_AssassinBase[i] + PosOffset);
+                std::cout << "Target_Assassin " << i + 1 << " Position - X: " << Target_AssassinPos.x << " Y: " << Target_AssassinPos.y << " Z: " << Target_AssassinPos.z << std::endl;
+            }
+        }
 
-    }
-
-
+    }*/
 
     // Wait for user input before exiting
     std::cout << "Press Enter to exit...";
