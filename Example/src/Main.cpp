@@ -14,15 +14,28 @@ uint64_t Psystem = 0x90;
 uint64_t ObjectCountOffset = 0x40092;
 uint64_t EntityListOffset = 0x40078;
 uint64_t PosOffset = 0x134;
-uint64_t RenderNodeColorOffset = 0x3C;
-uint64_t RenderNodePointer = 0x0;
-const uint64_t RENDER_NODE_COLOR_OFFSET = 0x3C; // Ensure this is the correct offset for color in the render node
-
 uint64_t renderNodePtr;
+
+// Counter for the number of HunterBasic entities found
+int hunterCount = 0;
+int Target_ButcherCount = 0;
+int immolator_eliteCount = 0;
+uint32_t RGBAColor = colorType::Red;
+
+
+bool loopCompleted = false;
+
+
+std::vector<uint64_t> hunterBases;
+std::vector<uint64_t> immolatorBases;
+std::vector<uint64_t> Target_ButcherBases;
+std::vector<uint64_t> Target_AssassinBase;
+std::vector<uint64_t> Spider_targetBase;
+std::vector<uint64_t> Target_ScrapbeakBase;
 
 bool run = true;
 Vector3 ImmolatorBossPos;
-// Apply additional commands before writing the glow color
+
 uint64_t allmap = 0x80018;
 float maxdistance = 5000;
 
@@ -55,10 +68,7 @@ struct entityNameStruct {
 
 
 int main() {
-
-
-
-    // Initialize memory
+    // Initialize memory(Dma)
     if (!mem.Init("HuntGame.exe", true, true)) {
         std::cout << "Failed to initialize DMA" << std::endl;
         return 1;
@@ -82,27 +92,12 @@ int main() {
     std::cout << "NumberOfObjects: " << NumberOfObjects << std::endl;
 
     uint64_t EntityList = EntitySystem + EntityListOffset;
-
+    /* This code is not needed for applying chams its only needed for reading the player cam stuff!
     D3DXMATRIX m_renderViewMatrix = mem.Read<D3DXMATRIX>(pSystem + 0x928 + 0x230);
     Vector3 cameraPos = mem.Read<Vector3>(pSystem + 0x928 + 0x2F0);
     D3DXMATRIX m_renderProjectionMatrix = mem.Read<D3DXMATRIX>(pSystem + 0x928 + 0x270);
-         
-    // Counter for the number of HunterBasic entities found
-    int hunterCount = 0;
-    int Target_ButcherCount = 0;
-    int immolator_eliteCount = 0;
-    uint32_t RGBAColor = colorType::Red;
+    */
 
-
-    bool loopCompleted = false;
-
-
-    std::vector<uint64_t> hunterBases;
-    std::vector<uint64_t> immolatorBases;
-    std::vector<uint64_t> Target_ButcherBases;
-    std::vector<uint64_t> Target_AssassinBase;
-    std::vector<uint64_t> Spider_targetBase;
-    std::vector<uint64_t> Target_ScrapbeakBase;
 
     // Iterate through the numberOfObjects
     for (unsigned int i = 0; i < NumberOfObjects; ++i) {
@@ -185,17 +180,6 @@ int main() {
 
     }
     /*
-    // Accessing Immolator positions
-    if (!immolatorBases.empty()) {
-        for (size_t i = 0; i < immolatorBases.size(); ++i) {
-            Vector3 immolatorPos = mem.Read<Vector3>(immolatorBases[i] + PosOffset);
-            std::cout << "Immolator " << i + 1 << " Position - X: " << immolatorPos.x << " Y: " << immolatorPos.y << " Z: " << immolatorPos.z << std::endl;
-        }
-    }*/
-
-
-
-    /*
     loopCompleted = true;
 
     while (loopCompleted)
@@ -227,6 +211,7 @@ int main() {
     }*/
 
     // Wait for user input before exiting
+    // Need to make this a button that if pressed lets you redo from the start so you can just refresh insted of logging back in to refresh
     std::cout << "Press Enter to exit...";
     std::cin.get();
 
