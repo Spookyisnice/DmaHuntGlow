@@ -20,7 +20,6 @@ uint64_t renderNodePtr;
 int hunterCount = 0;
 int Target_ButcherCount = 0;
 int immolator_eliteCount = 0;
-uint32_t RGBAColor = colorType::Red;
 
 
 bool loopCompleted = false;
