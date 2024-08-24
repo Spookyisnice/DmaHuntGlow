@@ -81,8 +81,17 @@ int main() {
     std::cout << "DMA initialized" << std::endl;
 
     uintptr_t base = mem.GetBaseDaddy("GameHunt.dll");
+    auto size = mem.GetBaseSize("GameHunt.dll");
 
-    uint64_t SSystemGlobalEnvironment = mem.Read<uint64_t>(base + SSystemGlobEnv);
+
+    //auto updates SSystemGlobalEnvironment offset
+    uint64_t SSystemGlobEnvSig = mem.FindSignature("48 8B 05 ? ? ? ? 48 85 C0 0F 84 EF 0E", base, base + size);
+
+    int relative = mem.Read<int>(SSystemGlobEnvSig + 3);
+    uint64_t SSystemGlobalEnvironment = mem.Read<uintptr_t>(SSystemGlobEnvSig + 7 + relative);
+    std::cout << "Sys: " << SSystemGlobalEnvironment << std::endl;
+
+    
     uint64_t EntitySystem = mem.Read<uint64_t>(SSystemGlobalEnvironment + EntitySystemOffset);
     uint64_t pSystem = mem.Read<uint64_t>(SSystemGlobalEnvironment + Psystem);
 
