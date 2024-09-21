@@ -48,6 +48,9 @@ struct Vector3
 	{
 		return Vector3{ x * factor, y * factor, z * factor };
 	}
+
+
+
 	//improvized world to screen (Chat_GPT)
 	/*
 	bool hunt::w2s(Coords game_pos, Coords& screen_pos) {
@@ -96,4 +99,40 @@ struct Vector3
 
 
 	float x, y, z;
+};
+
+struct Vector4 {
+	float x, y, z, w;
+
+	// Default and parameterized constructor
+	constexpr Vector4(
+		const float x = 0.f,
+		const float y = 0.f,
+		const float z = 0.f,
+		const float w = 0.f) noexcept :
+		x(x), y(y), z(z), w(w) { }
+
+	// Subtraction operator
+	constexpr Vector4 operator-(const Vector4& other) const noexcept
+	{
+		return Vector4{ x - other.x, y - other.y, z - other.z, w - other.w };
+	}
+
+	// Addition operator
+	constexpr Vector4 operator+(const Vector4& other) const noexcept
+	{
+		return Vector4{ x + other.x, y + other.y, z + other.z, w + other.w };
+	}
+
+	// Division operator
+	constexpr Vector4 operator/(const float factor) const noexcept
+	{
+		return Vector4{ x / factor, y / factor, z / factor, w / factor };
+	}
+
+	// Multiplication operator
+	constexpr Vector4 operator*(const float factor) const noexcept
+	{
+		return Vector4{ x * factor, y * factor, z * factor, w * factor };
+	}
 };
