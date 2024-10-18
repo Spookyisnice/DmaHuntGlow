@@ -167,11 +167,6 @@ int main() {
                 mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
                 mem.ExecuteWriteScatter(handle);
             }
-            else if (strstr(entityName.name, "bullet_C") != NULL) {
-                BulletBase.push_back(entityBase);
-                std::cout << "Found bullet_C " << std::endl;
-                mem.ExecuteWriteScatter(handle);
-            }
 
         }
         mem.CloseScatterHandle(handle);
