@@ -8,9 +8,9 @@ uint64_t EntityListOffset = 0x40078;
 uint64_t PosOffset = 0x134;
 uint64_t EntityArray = 0x400A0;
 uint64_t renderNodePtr;
+uint64_t SSystemGlobalEnvironmentoffset = 0x25d22e8;
 
 
-int relative;
 uint64_t SSystemGlobalEnvironment;
 uint64_t pSystem;
 uint64_t EntitySystem;
