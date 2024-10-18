@@ -1,6 +1,5 @@
 #pragma once
 // All variables from this Project
-//uint64_t SSystemGlobEnv = 0x26782f8; // Update this as needed
 uint64_t EntitySystemOffset = 0xC0;
 uint64_t Psystem = 0x90;
 uint64_t ObjectCountOffset = 0x40092;
@@ -8,7 +7,7 @@ uint64_t EntityListOffset = 0x40078;
 uint64_t PosOffset = 0x134;
 uint64_t EntityArray = 0x400A0;
 uint64_t renderNodePtr;
-uint64_t SSystemGlobalEnvironmentoffset = 0x25d22e8;
+uint64_t SSystemGlobalEnvironmentoffset = 0x25d22e8; //this changes every update it gets posted on unknowncheats https://www.unknowncheats.me/forum/other-fps-games/350352-hunt-showdown-45.html
 
 
 uint64_t SSystemGlobalEnvironment;
