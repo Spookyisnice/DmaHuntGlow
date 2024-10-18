@@ -29,16 +29,8 @@ int main() {
     {
         auto handle = mem.CreateScatterHandle();
 
-
-        uint64_t SSystemGlobEnvSig = mem.FindSignature("48 8B 05 ? ? ? ? 48 85 C0 0F 84 EF 0E", base, base + size);
-
-        mem.AddScatterReadRequest(handle, SSystemGlobEnvSig + 3, &relative, sizeof(relative));
+        mem.AddScatterReadRequest(handle, base + SSystemGlobalEnvironmentoffset, &SSystemGlobalEnvironment, sizeof(SSystemGlobalEnvironment));
         mem.ExecuteReadScatter(handle);
-        mem.AddScatterReadRequest(handle, SSystemGlobEnvSig + 7 + relative, &SSystemGlobalEnvironment, sizeof(SSystemGlobalEnvironment));
-        mem.ExecuteReadScatter(handle);
-        std::cout << "Sys: " << SSystemGlobalEnvironment << std::endl;
-
-
         mem.AddScatterReadRequest(handle, SSystemGlobalEnvironment + EntitySystemOffset, &EntitySystem, sizeof(EntitySystem));
         mem.AddScatterReadRequest(handle, SSystemGlobalEnvironment + Psystem, &pSystem, sizeof(pSystem));
         mem.ExecuteReadScatter(handle);
@@ -128,7 +120,7 @@ int main() {
             // Store entities in separate vectors based on their type
             if (strstr(entityName.name, "HunterBasic") != NULL) {
                 hunterBases.push_back(entityBase);
-                std::cout << "Found HunterBasic  [" << hunterBases.size() << "]" << std::endl;
+                //std::cout << "Found HunterBasic  [" << hunterBases.size() << "]" << std::endl;
                 mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
                 mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value2, sizeof(uint32_t));
                 mem.ExecuteWriteScatter(handle);
@@ -175,15 +167,17 @@ int main() {
                 mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
                 mem.ExecuteWriteScatter(handle);
             }
-
+            else if (strstr(entityName.name, "bullet_C") != NULL) {
+                BulletBase.push_back(entityBase);
+                std::cout << "Found bullet_C " << std::endl;
+                mem.ExecuteWriteScatter(handle);
+            }
 
         }
         mem.CloseScatterHandle(handle);
         std::cout << "Press Enter to Repeat loop";
         std::cin.get();
         system("CLS");
-
-
     }
 
 }
