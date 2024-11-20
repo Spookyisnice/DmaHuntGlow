@@ -12,5 +12,10 @@ To update this cheat you need to update the SSystemGlobalEnvironmentoffset in Gl
 </p>
 
 
+# Status:
+As of 20.11.2024 all offsets are updated and fully functional.
+
 ## Please read!
 You need a Dma card to run this cheat!
+
+
