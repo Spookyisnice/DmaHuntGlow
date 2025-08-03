@@ -7,8 +7,7 @@ uint64_t EntityListOffset = 0x40078;
 uint64_t PosOffset = 0x134;
 uint64_t EntityArray = 0x400A0;
 uint64_t renderNodePtr;
-uint64_t SSystemGlobalEnvironmentoffset = 0x22f9318; //this changes every update it gets posted on unknowncheats https://www.unknowncheats.me/forum/other-fps-games/350352-hunt-showdown-45.html
-
+uint64_t SSystemGlobalEnvironmentoffset = 0x2991318;
 
 uint64_t SSystemGlobalEnvironment;
 uint64_t pSystem;
@@ -21,7 +20,6 @@ uintptr_t slotPtr;
 uint64_t entityBase;
 uint32_t value1 = 0x80018;
 
-
 uintptr_t IGameFramework = 0xD8;
 uintptr_t pGame = 0x700;
 uintptr_t pGameClientNub = 0x48;
@@ -32,7 +30,6 @@ uintptr_t localPlayerIdx = 0x24;
 int hunterCount = 0;
 int Target_ButcherCount = 0;
 int immolator_eliteCount = 0;
-
 
 bool run = true;
 
@@ -46,15 +43,8 @@ std::vector<uint64_t> cash_register_golden;
 std::vector<uint64_t> cash_register;
 std::vector<uint64_t> localplayerbase;
 
-
-
-
-
 std::vector<uint64_t> BulletBase;
 std::vector<uint64_t> ZombieBase;
-
-
-
 
 enum colorType : uint32_t {
     Red = 0xFF0000FF,
@@ -83,6 +73,13 @@ struct entityNameStruct {
     char name[100];
 };
 
+uint32_t CyanFull = colorType::CyanFilled;
+uint32_t RedFull = colorType::Yellow;
 
-uint32_t value2 = colorType::CyanFilled;
-uint32_t value3 = colorType::RedFilled;
+
+uint32_t bigBodyColor = 0xFFA50000;
+
+uint64_t none = 0x200000008;
+uint64_t allmap = 0x80018;
+uint64_t limit_distance = 0x80008;
+float maxdistance = 5000;

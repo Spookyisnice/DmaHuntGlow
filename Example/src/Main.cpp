@@ -47,12 +47,6 @@ int main() {
         D3DXMATRIX m_renderProjectionMatrix = mem.Read<D3DXMATRIX>(pSystem + 0x928 + 0x270);
         */
 
-
-
-
-
-
-
         // Iterate through the numberOfObjects
         for (unsigned int i = 0; i < NumberOfObjects; ++i) {
             mem.AddScatterReadRequest(handle, EntityList + i * sizeof(uint64_t), &entityBase, sizeof(entityBase));
@@ -60,22 +54,6 @@ int main() {
             if (entityBase == NULL) {
                 continue;
             }
-
-            /*
-            char pBuffer[64];
-
-            uintptr_t Entity = mem.Read<uintptr_t>(EntitySystem + 0x40098 + (i * 0x8));
-
-            mem.Read(Entity + 0x10, pBuffer, sizeof(pBuffer));
-
-            // Initialize the buffer and read the name from memory into pBuffer
-
-            if (std::string(pBuffer).find("bullet") != std::string::npos)
-            {
-                printf("bullet is found.........");
-            }*/
-
-
 
             // Get name of entity
             entityNameStruct entityName;
@@ -95,13 +73,13 @@ int main() {
             mem.ExecuteReadScatter(handle);
             entityClassName.name[99] = '\0';
 
-            // Get entity render node
+            // Follow the new chams offset path: class + 0xa8 -> 0x0 -> + 0xa0 -> + 0x130
             mem.AddScatterReadRequest(handle, entityBase + 0xA8, &slotsPtr, sizeof(slotsPtr));
             mem.ExecuteReadScatter(handle);
             if (slotsPtr == 0) {
                 continue;
             }
-            mem.AddScatterReadRequest(handle, slotsPtr + 0, &slotPtr, sizeof(slotPtr));
+            mem.AddScatterReadRequest(handle, slotsPtr + 0x0, &slotPtr, sizeof(slotPtr));
             mem.ExecuteReadScatter(handle);
             if (slotPtr == 0) {
                 continue;
@@ -111,68 +89,88 @@ int main() {
             if (renderNodePtr == 0) {
                 continue;
             }
-            renderNode rNode;
-            mem.AddScatterReadRequest(handle, renderNodePtr, &rNode, sizeof(rNode));
-            mem.ExecuteReadScatter(handle);
 
+            // Calculate the chams color offset (renderNodePtr + 0x130)
+            uintptr_t chamsColorPtr = renderNodePtr + 0x130;
 
-
-            // Store entities in separate vectors based on their type
-            if (strstr(entityName.name, "HunterBasic") != NULL) {
+            // Store entities in separate vectors based on their class names and apply chams
+            if (strstr(entityClassName.name, "HunterBasic") != NULL) {
                 hunterBases.push_back(entityBase);
-                //std::cout << "Found HunterBasic  [" << hunterBases.size() << "]" << std::endl;
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value2, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
+                std::cout << "Found HunterBasic  [" << hunterBases.size() << "]" << std::endl;
 
+                // Apply chams using the new offset
+                /*
+				mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &allmap, sizeof(uint32_t));
+				mem.AddScatterWriteRequest(handle, renderNodePtr + 0x38, &maxdistance, sizeof(uint32_t));*/
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
             }
-            else if (strstr(entityName.name, "immolator_el") != NULL) {
+            else if (strstr(entityClassName.name, "immolator_elite") != NULL) {
                 immolatorBases.push_back(entityBase);
                 std::cout << "Found immolator_elite  [" << immolatorBases.size() << "]" << std::endl;
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
 
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
             }
-            else if (strstr(entityName.name, "Target_Butcher") != NULL) {
+            else if (strstr(entityClassName.name, "target_butcher") != NULL) {
                 Target_ButcherBases.push_back(entityBase);
-                std::cout << "Found Target_Butcher  [" << Target_ButcherBases.size() << "]" << std::endl;
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
-            }
-            else if (strstr(entityName.name, "Target_Assassin") != NULL) {
-                Target_AssassinBase.push_back(entityBase);
-                std::cout << "Found Target_Assassin  [" << Target_AssassinBase.size() << "]" << std::endl;
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
-            }
-            else if (strstr(entityName.name, "Spider_target") != NULL) {
-                Spider_targetBase.push_back(entityBase);
-                std::cout << "Found Spider_target  [" << Spider_targetBase.size() << "]" << std::endl;
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
-            }
-            else if (strstr(entityName.name, "Target_Scrapbeak") != NULL) {
-                Target_ScrapbeakBase.push_back(entityBase);
-                std::cout << "Found Target_Scrapbeak  [" << Target_ScrapbeakBase.size() << "]" << std::endl;
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
-            }
-            else if (strstr(entityClassName.name, "2r") != NULL && strcmp(entityName.name, "") == 0 || (entityClassName.name, "1r") != NULL && strcmp(entityName.name, "") == 0) {
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x10, &value1, sizeof(uint32_t));
-                mem.AddScatterWriteRequest(handle, renderNodePtr + 0x2C, &value3, sizeof(uint32_t));
-                mem.ExecuteWriteScatter(handle);
-            }
+                std::cout << "Found target_butcher  [" << Target_ButcherBases.size() << "]" << std::endl;
 
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }
+            else if (strstr(entityClassName.name, "target_spider") != NULL) {
+                Spider_targetBase.push_back(entityBase);
+                std::cout << "Found target_spider  [" << Spider_targetBase.size() << "]" << std::endl;
+
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }
+            else if (strstr(entityClassName.name, "target_scrapbeak") != NULL) {
+                Target_ScrapbeakBase.push_back(entityBase);
+                std::cout << "Found target_scrapbeak  [" << Target_ScrapbeakBase.size() << "]" << std::endl;
+
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }
+            else if (strstr(entityClassName.name, "target_assassin") != NULL) {
+                Target_AssassinBase.push_back(entityBase);
+                std::cout << "Found target_assassin  [" << Target_AssassinBase.size() << "]" << std::endl;
+
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }
+            else if (strstr(entityClassName.name, "target_rotjaw") != NULL) {
+                // Add rotjaw vector if not already in globals
+                std::cout << "Found target_rotjaw" << std::endl;
+
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }
+            else if (strstr(entityName.name, "cash_register_golden") != NULL) {
+                cash_register_golden.push_back(entityBase);
+                std::cout << "Found cash_register_golden  [" << cash_register_golden.size() << "]" << std::endl;
+
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &bigBodyColor, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }
+            /*
+            else if (strstr(entityClassName.name, "2r") != NULL && strcmp(entityName.name, "") == 0 || (entityClassName.name, "1r") != NULL && strcmp(entityName.name, "") == 0) {
+                mem.AddScatterWriteRequest(handle, chamsColorPtr, &RedFull, sizeof(uint32_t));
+                mem.ExecuteWriteScatter(handle);
+            }*/
         }
         mem.CloseScatterHandle(handle);
         std::cout << "Press Enter to Repeat loop";
         std::cin.get();
         system("CLS");
+        // Clear all entity vectors before each loop iteration
+        hunterBases.clear();
+        immolatorBases.clear();
+        Target_ButcherBases.clear();
+        Spider_targetBase.clear();
+        Target_ScrapbeakBase.clear();
+        Target_AssassinBase.clear();
+        cash_register_golden.clear();
     }
-
 }
