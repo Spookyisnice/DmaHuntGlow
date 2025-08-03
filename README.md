@@ -13,8 +13,7 @@ To update this cheat you need to update the SSystemGlobalEnvironmentoffset in Gl
 
 
 # Status:
-As of 06/07/2025, the chams offsets have changed, which means the glow feature no longer works until you update the chams offsets. However, you can still use it as an example to create your own cheat and see how filtering out players, bosses, etc., works.
-
+As of 03/08/2025, this cheat works fully and flawlessly.
 
 ## Please read!
 You need a Dma card to run this cheat!
